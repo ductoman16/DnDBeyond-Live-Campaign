@@ -1,17 +1,17 @@
 // ==UserScript==
 // @name			D&D Beyond Live-Update Campaign
-// @namespace		https://github.com/FaithLilley/DnDBeyond-Live-Campaign/
+// @namespace		https://github.com/ductoman16/DnDBeyond-Live-Campaign/
 // @copyright		Copyright (c) 2024 Faith Elisabeth Lilley (aka Stormknight)
 // @version			1.1
 // @description		Provides live character data on the D&D Beyond campaign page
-// @author			Faith Elisabeth Lilley (aka Stormknight)
+// @author			Ryan Lennox (ductoman16)
 // @match			https://www.dndbeyond.com/campaigns/*
-// @updateURL		https://github.com/FaithLilley/DnDBeyond-Live-Campaign/raw/master/ddb-live-campaign.user.js
-// @downloadURL		https://github.com/FaithLilley/DnDBeyond-Live-Campaign/raw/master/ddb-live-campaign.user.js
-// @supportURL		https://github.com/FaithLilley/DnDBeyond-Live-Campaign/
+// @updateURL		https://github.com/ductoman16/DnDBeyond-Live-Campaign/raw/master/ddb-live-campaign.user.js
+// @downloadURL		https://github.com/ductoman16/DnDBeyond-Live-Campaign/raw/master/ddb-live-campaign.user.js
+// @supportURL		https://github.com/ductoman16/DnDBeyond-Live-Campaign/
 // @require			https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js
 // @require         https://media.dndbeyond.com/character-tools/vendors~characterTools.bundle.dec3c041829e401e5940.min.js
-// @license			MIT; https://github.com/FaithLilley/DnDBeyond-Live-Campaign/blob/master/LICENSE.md
+// @license			MIT; https://github.com/ductoman16/DnDBeyond-Live-Campaign/blob/master/LICENSE.md
 // ==/UserScript==
 console.log("Initialising D&D Beyond Live Campaign script.");
 
@@ -388,9 +388,19 @@ function updateCharacterRaceandClass(node,charData) {
 }
 
 function updateCharacterMainStats(node,charData) {
+    var tempHp = charData.hitPointInfo.tempHp || 0;
     node.find('.ddb-lc-armorclass').html(charData.armorClass);
-    node.find('.ddb-lc-character-stats-hitpoints-cur').html(charData.hitPointInfo.remainingHp);
+    node.find('.ddb-lc-character-stats-hitpoints-cur').html(charData.hitPointInfo.remainingHp + tempHp);
     node.find('.ddb-lc-character-stats-hitpoints-max').html(charData.hitPointInfo.totalHp);
+    var tmpEl = node.find('.ddb-lc-character-stats-hitpoints-tmp');
+    var curEl = node.find('.ddb-lc-character-stats-hitpoints-cur');
+    if (tempHp > 0) {
+        tmpEl.html('+' + tempHp + ' TMP').show();
+        curEl.addClass('has-temp-hp');
+    } else {
+        tmpEl.hide();
+        curEl.removeClass('has-temp-hp');
+    }
     node.find('.ddb-lc-character-stats-initiative-value').html(Math.abs(charData.initiative));
     node.find('.ddb-lc-character-stats-initiative-sign').html(getSign(charData.initiative));
     // Passives
@@ -881,11 +891,22 @@ function loadStylesheet() {
     font-weight: bold;
     font-size: 20px;
 }
+.ddb-lc-character-stats-hitpoints-cur.has-temp-hp {
+    color: #4a90d9;
+}
 .ddb-lc-character-stats-hitpoints-max {
     line-height: 16px;
     color: #808080;
     font-weight: bold;
     font-size: 14px;
+}
+.ddb-lc-character-stats-hitpoints-tmp {
+    line-height: 13px;
+    margin-top: 4px;
+    color: #4a90d9;
+    font-weight: bold;
+    font-size: 11px;
+    display: none;
 }
 .ddb-lc-character-stats-hitpoints svg {
     width: 100%;
@@ -1042,6 +1063,7 @@ function defineHTMLStructure() {
                         ` + svgImageData.hitPointBox + `
                         <span class="ddb-lc-character-stats-hitpoints-cur">CUR</span>
                         <span class="ddb-lc-character-stats-hitpoints-max">MAX</span>
+                        <span class="ddb-lc-character-stats-hitpoints-tmp"></span>
                     </div>
                     <div class="ddb-lc-character-stats-initiative">
                         ` + svgImageData.initiativeBox + `

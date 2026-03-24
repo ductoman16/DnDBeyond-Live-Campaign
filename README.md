@@ -1,6 +1,6 @@
 # D&D Beyond Live-Update Campaign Page
 
-![GitHub last commit](https://img.shields.io/github/last-commit/FaithLilley/DnDBeyond-Live-Campaign?style=plastic&logo=github) ![GitHub repo size](https://img.shields.io/github/repo-size/FaithLilley/DnDBeyond-Live-Campaign?style=plastic) ![GitHub License](https://img.shields.io/github/license/FaithLilley/DnDBeyond-Live-Campaign?style=plastic) ![Static Badge](https://img.shields.io/badge/JavaScript-x?style=plastic&logo=javascript&color=%235b5b5b)
+![GitHub last commit](https://img.shields.io/github/last-commit/ductoman16/DnDBeyond-Live-Campaign?style=plastic&logo=github) ![GitHub repo size](https://img.shields.io/github/repo-size/ductoman16/DnDBeyond-Live-Campaign?style=plastic) ![GitHub License](https://img.shields.io/github/license/ductoman16/DnDBeyond-Live-Campaign?style=plastic) ![Static Badge](https://img.shields.io/badge/JavaScript-x?style=plastic&logo=javascript&color=%235b5b5b)
 
 ![Live Update Campaign Page Splash](./images/live-update-campaign.png)
 
@@ -36,7 +36,7 @@ Ensure you are running a browser extension that takes UserScripts (see Prerequis
 
 Click on the Install Script button below to install this user script to your browser extension, then follow the instructions from your browser extension.
 
-[![Live Update Campaign Page Splash](./images/install-button.png)](https://github.com/FaithLilley/DnDBeyond-Live-Campaign/raw/master/ddb-live-campaign.user.js) 
+[![Live Update Campaign Page Splash](./images/install-button.png)](https://github.com/ductoman16/DnDBeyond-Live-Campaign/raw/master/ddb-live-campaign.user.js)
 
 ## 3. How to Use
 
@@ -60,11 +60,11 @@ This is how the character cards on the campaign page look with this script runni
 
 ## 5. Credits
 
-Author: [Faith Elisabeth Lilley](https://github.com/FaithLilley) (aka Stormknight)
+This project has the following lineage:
 
-Contributors: [@xander-hirst](https://github.com/xander-hirst)
-
-Project forked from [DNDBeyond-DM-Screen](https://github.com/TeaWithLucas/DNDBeyond-DM-Screen) by [TeaWithLucas](https://github.com/TeaWithLucas) - huge thanks for figuring out the DDB API code.
+1. [TeaWithLucas](https://github.com/TeaWithLucas) created [DNDBeyond-DM-Screen](https://github.com/TeaWithLucas/DNDBeyond-DM-Screen) — the original foundation, including the DDB API integration.
+2. [Faith Elisabeth Lilley](https://github.com/FaithLilley) (aka Stormknight) forked it to create this project, **D&D Beyond Live-Update Campaign**, with contributions from [@xander-hirst](https://github.com/xander-hirst).
+3. [Ryan Lennox](https://github.com/ductoman16) (ductoman16) forked Stormknight's project and maintains this version.
 
 ## 6. License
 

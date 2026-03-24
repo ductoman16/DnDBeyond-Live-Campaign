@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name			D&D Beyond Live Campaign
-// @namespace		https://github.com/FaithLilley/DnDBeyond-Live-Campaign/
+// @namespace		https://github.com/ductoman16/DnDBeyond-Live-Campaign/
 // @version			0.1
 // @description		Provides live character data on the D&D Beyond campaign page
 // @author			Faith Lilley (aka Stormknight)
 // @match			https://www.dndbeyond.com/campaigns/*
-// @updateURL		https://github.com/FaithLilley/DnDBeyond-Live-Campaign/raw/master/ddb-live-campaign.user.js
+// @updateURL		https://github.com/ductoman16/DnDBeyond-Live-Campaign/raw/master/ddb-live-campaign.user.js
 // @require			https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js
 // @require         https://media.dndbeyond.com/character-tools/vendors~characterTools.bundle.dec3c041829e401e5940.min.js
 // @grant			GM_setValue
@@ -24,7 +24,7 @@ const campaignElementTarget = '.ddb-campaigns-detail-header-secondary';
 const rulesUrls = ["https://character-service.dndbeyond.com/character/v4/rule-data", "https://gamedata-service.dndbeyond.com/vehicles/v3/rule-data"];
 const charJSONurlBase = "https://character-service.dndbeyond.com/character/v4/character/";
 
-const stylesheetUrls = ["https://raw.githack.com/FaithLilley/DnDBeyond-Live-Campaign/sk-rebuild/ddb-live-campaign.css"]
+const stylesheetUrls = ["https://raw.githack.com/ductoman16/DnDBeyond-Live-Campaign/sk-rebuild/ddb-live-campaign.css"]
 
 const gameCollectionUrl = {prefix :"https://character-service.dndbeyond.com/character/v4/game-data/", postfix: "/collection"}
 const optionalRules = {
