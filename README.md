@@ -50,7 +50,7 @@ You'll now see additional information displayed on the card of each character, s
 - Ability Scores
 - Passive Perception / Investigation / Insight
 
-The data is automatically updated every 60 seconds.
+The data is automatically updated every 30 seconds.
 
 ## 4. What does it look like?
 
@@ -71,6 +71,10 @@ This project has the following lineage:
 This project uses the [MIT license](LICENSE.md).
 
 ## 7. Version Notes
+
+### v 1.1.2
+
+Add support for displaying Temporary Hit Points.
 
 ### v 1.1.1
 
