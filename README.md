@@ -11,9 +11,10 @@
   - [2. How to Install and Set-up](#2-how-to-install-and-set-up)
   - [3. How to Use](#3-how-to-use)
   - [4. What does it look like?](#4-what-does-it-look-like)
-  - [5. Credits](#5-credits)
-  - [6. License](#6-license)
-  - [7. Version Notes](#7-version-notes)
+  - [5. Testing](#5-testing)
+  - [6. Credits](#6-credits)
+  - [7. License](#7-license)
+  - [8. Version Notes](#8-version-notes)
     - [v 1.1.1](#v-111)
     - [v 1.1](#v-11)
 
@@ -58,7 +59,45 @@ This is how the character cards on the campaign page look with this script runni
 
 ![Live Update Campaign Page Splash](./images/example-campaign.jpg)
 
-## 5. Credits
+## 5. Testing
+
+Run the local regression tests with:
+
+```powershell
+node --test tests\stat-normalization.test.js
+```
+
+The userscript also has an opt-in self-check for the real campaign page. In the browser console on a D&D Beyond campaign page, run:
+
+```javascript
+localStorage.setItem("ddbLiveCampaignValidate", "true");
+location.reload();
+```
+
+After reload, each character update logs either `DDB Live Campaign validation passed` or a detailed mismatch list. You can also run `window.ddbLiveCampaignValidate()` manually in the console. Disable it with:
+
+```javascript
+localStorage.removeItem("ddbLiveCampaignValidate");
+```
+
+To verify against a real authenticated D&D Beyond campaign page in Playwright's separate Chromium profile:
+
+```powershell
+$env:LIVE_DDB_CAMPAIGN_URL = "https://www.dndbeyond.com/campaigns/YOUR_CAMPAIGN_ID"
+$env:LIVE_DDB_CHARACTER_FILTER = "Roric" # optional
+node --test tests\live-ddb-campaign.test.js
+```
+
+If the Chromium profile is not logged into D&D Beyond yet, the test opens a headed browser. Log in manually, then re-run the command. The profile is saved at `%USERPROFILE%\.ddb-live-campaign-playwright-profile`.
+
+If Google blocks login in bundled Chromium, use installed Microsoft Edge instead:
+
+```powershell
+$env:LIVE_DDB_BROWSER_CHANNEL = "msedge"
+node --test tests\live-ddb-campaign.test.js
+```
+
+## 6. Credits
 
 This project has the following lineage:
 
@@ -66,11 +105,11 @@ This project has the following lineage:
 2. [Faith Elisabeth Lilley](https://github.com/FaithLilley) (aka Stormknight) forked it to create this project, **D&D Beyond Live-Update Campaign**, with contributions from [@xander-hirst](https://github.com/xander-hirst).
 3. [Ryan Lennox](https://github.com/ductoman16) (ductoman16) forked Stormknight's project and maintains this version.
 
-## 6. License
+## 7. License
 
 This project uses the [MIT license](LICENSE.md).
 
-## 7. Version Notes
+## 8. Version Notes
 
 ### v 1.1.2
 

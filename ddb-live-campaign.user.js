@@ -39,6 +39,12 @@ const optionalRules = {
 };
 
 const debugMode = false;
+const selfValidationDefault =
+    typeof window !== "undefined" &&
+    (
+        new URLSearchParams(window.location.search).has("ddbLiveCampaignValidate") ||
+        window.localStorage.getItem("ddbLiveCampaignValidate") === "true"
+    );
 
 const autoUpdateDefault = true;
 const updateDurationDefault = 30;
@@ -154,6 +160,7 @@ var initalModules = {
             }
 
             return {
+                rawCharacter: state.character,
                 name: charf1.getName(state),
                 avatarUrl: charf1.getAvatarUrl(state),
                 spellCasterInfo: charf1.getSpellCasterInfo(state),
@@ -368,7 +375,158 @@ function updateAllCharacters() {
 function updateCharacterOnPage(character) {
     updateCharacterRaceandClass(character.node, character.data);
     updateCharacterMainStats(character.node, character.data);
+    validateCharacterOnPage(character, false);
 }
+
+// TESTABLE_STAT_HELPERS_START
+const abilityScoreModifierSubTypesById = {
+    1: "strength-score",
+    2: "dexterity-score",
+    3: "constitution-score",
+    4: "intelligence-score",
+    5: "wisdom-score",
+    6: "charisma-score",
+};
+
+function abilityModifier(score) {
+    return Math.floor((score - 10) / 2);
+}
+
+function getCharacterStatValue(stats, abilityId) {
+    let stat = (stats || []).find(function(item) {
+        return item.id === abilityId;
+    });
+    return stat && stat.value !== null && stat.value !== undefined ? stat.value : null;
+}
+
+function getRaceAbilityBonus(character, abilityId) {
+    let abilitySubType = abilityScoreModifierSubTypesById[abilityId];
+    if (!abilitySubType || !character || !character.modifiers || !character.modifiers.race) {
+        return 0;
+    }
+    return character.modifiers.race.reduce(function(total, modifier) {
+        if (modifier.type !== "bonus" || modifier.subType !== abilitySubType) {
+            return total;
+        }
+        return total + (modifier.value || modifier.fixedValue || 0);
+    }, 0);
+}
+
+function hasOptionalOriginReplacement(character) {
+    return !!(character && character.optionalOrigins && character.optionalOrigins.length > 0);
+}
+
+function uses2024Rules(character) {
+    return !!(
+        character &&
+        character.classes &&
+        character.classes.some(function(classInfo) {
+            let sources = classInfo.definition && classInfo.definition.sources;
+            return (sources || []).some(function(source) {
+                return source.sourceId === 145;
+            });
+        })
+    );
+}
+
+function shouldSuppressLegacyRaceAbilityBonuses(character) {
+    return !!(character && character.race && character.race.isLegacy && uses2024Rules(character));
+}
+
+function normalizeAbilityScores(abilities, character) {
+    return (abilities || []).map(function(ability) {
+        let normalized = Object.assign({}, ability);
+        let baseStat = getCharacterStatValue(character && character.stats, ability.id);
+        let raceBonus = getRaceAbilityBonus(character, ability.id);
+
+        if (shouldSuppressLegacyRaceAbilityBonuses(character) && raceBonus !== 0) {
+            normalized.totalScore = ability.totalScore - raceBonus;
+            normalized.modifier = abilityModifier(normalized.totalScore);
+            normalized.originalModifier = ability.modifier;
+        } else if (
+            hasOptionalOriginReplacement(character) &&
+            baseStat !== null &&
+            raceBonus !== 0 &&
+            ability.totalScore === baseStat + raceBonus
+        ) {
+            normalized.totalScore = baseStat;
+            normalized.modifier = abilityModifier(baseStat);
+            normalized.originalModifier = ability.modifier;
+        }
+
+        return normalized;
+    });
+}
+
+function getAbilityByName(abilities, abilityName) {
+    return (abilities || []).find(function(ability) {
+        return ability.name === abilityName;
+    });
+}
+
+function getAbilityModifierDelta(abilities, abilityName) {
+    let ability = getAbilityByName(abilities, abilityName);
+    if (!ability || ability.originalModifier === undefined) {
+        return 0;
+    }
+    return ability.modifier - ability.originalModifier;
+}
+
+function getEquippedArmor(character) {
+    return ((character && character.inventory) || []).find(function(item) {
+        return item.equipped && item.definition && item.definition.filterType === "Armor";
+    });
+}
+
+function getArmorDexterityDelta(armor, abilities) {
+    let dex = getAbilityByName(abilities, "dex");
+    if (!dex || dex.originalModifier === undefined) {
+        return 0;
+    }
+
+    if (!armor || !armor.definition) {
+        return dex.modifier - dex.originalModifier;
+    }
+
+    switch (armor.definition.type) {
+        case "Light Armor":
+            return dex.modifier - dex.originalModifier;
+        case "Medium Armor":
+            return Math.min(dex.modifier, 2) - Math.min(dex.originalModifier, 2);
+        default:
+            return 0;
+    }
+}
+
+function normalizeArmorClass(armorClass, character, abilities) {
+    return armorClass + getArmorDexterityDelta(getEquippedArmor(character), abilities);
+}
+
+function normalizeDerivedStats(charData) {
+    let normalized = Object.assign({}, charData);
+    normalized.abilities = normalizeAbilityScores(charData.abilities, charData.rawCharacter);
+
+    let dexDelta = getAbilityModifierDelta(normalized.abilities, "dex");
+    let intDelta = getAbilityModifierDelta(normalized.abilities, "int");
+    let wisDelta = getAbilityModifierDelta(normalized.abilities, "wis");
+
+    normalized.armorClass = normalizeArmorClass(charData.armorClass, charData.rawCharacter, normalized.abilities);
+    normalized.initiative = charData.initiative + dexDelta;
+    normalized.passivePerception = charData.passivePerception + wisDelta;
+    normalized.passiveInvestigation = charData.passiveInvestigation + intDelta;
+    normalized.passiveInsight = charData.passiveInsight + wisDelta;
+
+    return normalized;
+}
+
+if (typeof module !== "undefined" && module.exports) {
+    module.exports = {
+        abilityModifier,
+        normalizeAbilityScores,
+        normalizeDerivedStats,
+    };
+}
+// TESTABLE_STAT_HELPERS_END
 
 function updateCharacterRaceandClass(node,charData) {
     let raceString = "";
@@ -388,6 +546,7 @@ function updateCharacterRaceandClass(node,charData) {
 }
 
 function updateCharacterMainStats(node,charData) {
+    charData = normalizeDerivedStats(charData);
     var tempHp = charData.hitPointInfo.tempHp || 0;
     node.find('.ddb-lc-armorclass').html(charData.armorClass);
     node.find('.ddb-lc-character-stats-hitpoints-cur').html(charData.hitPointInfo.remainingHp + tempHp);
@@ -414,6 +573,96 @@ function updateCharacterMainStats(node,charData) {
         node.find(valTarget).html(item.totalScore);
         node.find(modTarget).html(signedInteger(item.modifier));
     });
+}
+
+function getRenderedText(node, selector) {
+    return node.find(selector).first().text().trim();
+}
+
+function assertRenderedValue(results, label, actual, expected) {
+    actual = String(actual);
+    expected = String(expected);
+    if (actual !== expected) {
+        results.push({
+            label: label,
+            actual: actual,
+            expected: expected,
+        });
+    }
+}
+
+function validateCharacterOnPage(character, forceValidation) {
+    if ((!selfValidationDefault && forceValidation !== true) || !character || !character.node || !character.data) {
+        return [];
+    }
+
+    let node = character.node;
+    let charData = normalizeDerivedStats(character.data);
+    let failures = [];
+
+    assertRenderedValue(failures, "Armor Class", getRenderedText(node, ".ddb-lc-armorclass"), charData.armorClass);
+    assertRenderedValue(
+        failures,
+        "Initiative",
+        getRenderedText(node, ".ddb-lc-character-stats-initiative-sign") +
+            getRenderedText(node, ".ddb-lc-character-stats-initiative-value"),
+        signedInteger(charData.initiative)
+    );
+    assertRenderedValue(failures, "Passive Perception", getRenderedText(node, ".ddb-lc-passive-perception"), charData.passivePerception);
+    assertRenderedValue(failures, "Passive Investigation", getRenderedText(node, ".ddb-lc-passive-investigation"), charData.passiveInvestigation);
+    assertRenderedValue(failures, "Passive Insight", getRenderedText(node, ".ddb-lc-passive-insight"), charData.passiveInsight);
+
+    charData.abilities.forEach(function(ability) {
+        assertRenderedValue(
+            failures,
+            ability.name.toUpperCase() + " Score",
+            getRenderedText(node, ".ddb-lc-value-" + ability.name),
+            ability.totalScore
+        );
+        assertRenderedValue(
+            failures,
+            ability.name.toUpperCase() + " Modifier",
+            getRenderedText(node, ".ddb-lc-modifier-" + ability.name),
+            signedInteger(ability.modifier)
+        );
+    });
+
+    let correctedAbilities = charData.abilities.filter(function(ability) {
+        return ability.originalModifier !== undefined;
+    });
+    let characterName = charData.name || "Unknown character";
+
+    if (failures.length > 0) {
+        console.error("DDB Live Campaign validation failed for " + characterName, failures);
+    } else {
+        console.info("DDB Live Campaign validation passed for " + characterName);
+    }
+
+    if (correctedAbilities.length > 0) {
+        console.info(
+            "DDB Live Campaign corrected optional-origin ability bonuses for " + characterName,
+            correctedAbilities.map(function(ability) {
+                return {
+                    ability: ability.name,
+                    renderedScore: ability.totalScore,
+                    renderedModifier: signedInteger(ability.modifier),
+                    rulesEngineModifier: signedInteger(ability.originalModifier),
+                };
+            })
+        );
+    }
+
+    return failures;
+}
+
+if (typeof window !== "undefined") {
+    window.ddbLiveCampaignValidate = function() {
+        let results = {};
+        for (let id in charactersData) {
+            results[id] = validateCharacterOnPage(charactersData[id], true);
+        }
+        return results;
+    };
 }
 
 /**
